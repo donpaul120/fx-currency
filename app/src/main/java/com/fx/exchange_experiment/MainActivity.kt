@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
 
+    @Suppress("unused")
     private val viewModel: ExchangeRateViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {

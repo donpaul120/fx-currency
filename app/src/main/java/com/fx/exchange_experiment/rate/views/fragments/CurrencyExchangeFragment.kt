@@ -1,5 +1,6 @@
 package com.fx.exchange_experiment.rate.views.fragments
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -10,16 +11,19 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.EditText
+import androidx.core.view.isVisible
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import com.fx.exchange_experiment.R
 import com.fx.exchange_experiment.core.network.Resource
 import com.fx.exchange_experiment.core.utils.CurrencyUtil
+import com.fx.exchange_experiment.core.views.ListViewCallback
 import com.fx.exchange_experiment.core.views.utils.ViewUtils
 import com.fx.exchange_experiment.core.views.utils.ViewUtils.withDefaultListDivider
 import com.fx.exchange_experiment.databinding.FragmentCurrencyExchangeBinding
 import com.fx.exchange_experiment.rate.model.data.ExchangeRateListItem
+import com.fx.exchange_experiment.rate.model.entities.ExchangeRate
 import com.fx.exchange_experiment.rate.viewmodels.ExchangeRateViewModel
 import com.fx.exchange_experiment.rate.views.adapters.ExchangeRateAdapter
 import dagger.hilt.android.AndroidEntryPoint
@@ -45,15 +49,14 @@ class CurrencyExchangeFragment : Fragment() {
     private lateinit var exchangeRateAdapter: ExchangeRateAdapter
 
     override fun onCreateView(inflater: LayoutInflater, parent: ViewGroup?, state: Bundle?): View {
-        layoutBinding = DataBindingUtil.inflate(
-            inflater, R.layout.fragment_currency_exchange, parent, false
-        )
+        layoutBinding = DataBindingUtil.inflate(inflater, R.layout.fragment_currency_exchange, parent, false)
         return layoutBinding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         layoutBinding.lifecycleOwner = this.viewLifecycleOwner
+        layoutBinding.callback = listViewCallback
 
         setupAmountField()
         setupCurrencySpinner()
@@ -70,10 +73,9 @@ class CurrencyExchangeFragment : Fragment() {
             addTextChangedListener(MoneyTextWatcher(this) {
                 try {
                     viewModel.exchangeAmount = it.replace(",", "").toDouble()
-                    println("Exchange Amount => ${(viewModel.exchangeAmount)}")
                     subscribeUiToExchangeRates()
                 } catch (ex: NumberFormatException) {
-                    //Handle
+                    ex.printStackTrace()
                 }
             })
         }
@@ -110,16 +112,40 @@ class CurrencyExchangeFragment : Fragment() {
         uiSubscriptionJob?.cancel()
         uiSubscriptionJob = lifecycleScope.launchWhenCreated {
             viewModel.getExchangeRates().collectLatest { responseData ->
-                when(responseData) {
-                    is Resource.Success -> {
-                        val exchangeRates = responseData.data
-                        val items = exchangeRates.map { ExchangeRateListItem(it, viewModel.exchangeAmount) }
-                        exchangeRateAdapter.dispatchUpdates(items)
-                    }
-                    else -> Unit
+                describeLoadBehavior(responseData)
+                if(responseData is Resource.Success) {
+                    val exchangeRates = responseData.data
+                    val items = exchangeRates.map { ExchangeRateListItem(it, viewModel.exchangeAmount) }
+                    exchangeRateAdapter.dispatchUpdates(items)
                 }
+                layoutBinding.executePendingBindings()
             }
         }
+    }
+
+    @SuppressLint("SetTextI18n")
+    private fun describeLoadBehavior(responseData: Resource<List<ExchangeRate>>) {
+        when(responseData) {
+            is Resource.Success -> {
+                layoutBinding.errorLayout.errorContainer.isVisible = false
+                layoutBinding.loadingIndicator.isVisible = false
+            }
+            is Resource.Loading -> {
+                layoutBinding.errorLayout.errorContainer.isVisible = false
+                layoutBinding.loadingIndicator.isVisible = true
+            }
+            is Resource.Error -> {
+                layoutBinding.loadingIndicator.isVisible = false
+                layoutBinding.errorLayout.errorContainer.isVisible = true
+                layoutBinding.errorLayout.errorTitle.text = "Oops!"
+                layoutBinding.errorLayout.errorSubtitle.text = responseData.error.message
+
+            }
+        }
+    }
+
+    private val listViewCallback = object: ListViewCallback {
+        override fun retry() = subscribeUiToExchangeRates()
     }
 
     companion object {
@@ -133,7 +159,7 @@ class CurrencyExchangeFragment : Fragment() {
     class MoneyTextWatcher constructor(
         private val editText: EditText,
         private val afterTextChange: (amount: String) -> Unit = {}
-        ) : TextWatcher {
+    ) : TextWatcher {
         private var lastAmount = ""
         private var lastCursorPosition = -1
 

@@ -30,6 +30,7 @@ import io.mockk.*
 import io.mockk.impl.annotations.MockK
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import org.hamcrest.core.AnyOf
 import org.hamcrest.core.IsEqual
 import org.junit.After
 import org.junit.Before
@@ -126,7 +127,7 @@ class ExchangeRateViewModelTest {
         val workInfo = workManager.getWorkInfoById(periodExchangeRequest.id).get()
 
         //Assert
-        assertThat(workInfo.state, `is`(WorkInfo.State.ENQUEUED))
+        assertThat(workInfo.state, AnyOf.anyOf(`is`(WorkInfo.State.RUNNING), `is`(WorkInfo.State.ENQUEUED)))
     }
 
     @ExperimentalTime

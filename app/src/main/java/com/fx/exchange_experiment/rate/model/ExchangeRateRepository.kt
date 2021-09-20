@@ -27,7 +27,7 @@ class ExchangeRateRepository
         base: Currency = Currency.USD,
     ): Flow<Resource<List<ExchangeRate>>> {
         return networkBoundResource(
-            shouldFetchFromRemote = { false },
+            shouldFetchFromRemote = { it.isNullOrEmpty() },
             fetchFromLocal = {
                 exchangeDao.getExchangeRates().map {
                     return@map exchangeConverter.convertToCurrencyRate(
@@ -38,7 +38,7 @@ class ExchangeRateRepository
                 }
             },
             fetchFromRemote = { currencyLayerService.getRates().map(::convertApiResponseToList) },
-            saveRemoteData = {}
+            saveRemoteData = { exchangeDao.insertItems(*it.toTypedArray()) }
         ).flowOn(Dispatchers.IO)
     }
 
@@ -46,7 +46,6 @@ class ExchangeRateRepository
      *
      */
     fun getCurrencyRates(): Flow<Resource<List<ExchangeRate>>> {
-        println("Starting Call....")
         return networkBoundResource(
             fetchFromLocal = {  exchangeDao.getExchangeRates() },
             fetchFromRemote = { currencyLayerService.getRates().map(::convertApiResponseToList) },

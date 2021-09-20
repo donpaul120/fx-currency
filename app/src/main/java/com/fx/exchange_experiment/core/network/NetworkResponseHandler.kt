@@ -17,8 +17,8 @@ object NetworkResponseHandler {
 
     fun <T> handle(throwable: Throwable): NetworkResponse<T> {
         return when (throwable) {
-            is IOException -> NetworkResponse.Error(ServiceError("", ""))
-            else -> NetworkResponse.Error(ServiceError("", ""))
+            is IOException -> NetworkResponse.Error(ServiceError("", "No Internet Connection"))
+            else -> NetworkResponse.Error(ServiceError("", "An unknown error occurred!"))
         }
     }
 

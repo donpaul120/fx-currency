@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+        <variable
+            name="actionText"
+            type="String" />
+        <variable
+            name="callback"
+            type="com.fx.exchange_experiment.core.views.ListViewCallback" />
+    </data>
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        android:id="@+id/errorContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone"
+        >
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/errorTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textStyle="bold"
+            android:textSize="18sp"
+            android:textColor="@color/textBlack"
+            tools:text="Oops!"
+            />
+
+        <androidx.appcompat.widget.AppCompatTextView
+            android:id="@+id/errorSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textSize="15sp"
+            android:textColor="@color/textBlackSubtitle"
+            tools:text="Something went wrong!"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="24dp"
+            />
+
+        <com.google.android.material.button.MaterialButton
+            style="@style/retryButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textAllCaps="false"
+            android:onClick="@{(v) -> callback.retry()}"
+            android:text="@{actionText}"
+            tools:text="Retry"
+            />
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+</layout>
